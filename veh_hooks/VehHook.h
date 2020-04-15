@@ -34,7 +34,7 @@ inline bool VehHook::hook(void* target, void* hook) {
 	_original	= target;
 	_hook		= hook;
 
-	if (_same_page(target, hook);) return false;
+	if (_same_page(target, hook)) return false;
 
 	if (VirtualProtect(target, 1, PAGE_EXECUTE_READ | PAGE_GUARD, &_old)) {
 		_hooked = true;
@@ -79,13 +79,13 @@ inline bool VehHook::_same_page(void* first, void* second) {
 	MEMORY_BASIC_INFORMATION mbi_first, mbi_second;
 
 	if (!VirtualQuery(first, &mbi_first, sizeof(mbi_first)))
-		return { false, {} };
+		return false;
 
 	if (!VirtualQuery(second, &mbi_second, sizeof(mbi_second)))
-		return { false, {} };
+		return false;
 
 	if (mbi_first.BaseAddress == mbi_second.BaseAddress)
-		return { true, mbi_first };
+		return true;
 
-	return { false, {} };
+	return false
 }
