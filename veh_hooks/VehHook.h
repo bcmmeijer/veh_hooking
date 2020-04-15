@@ -1,7 +1,6 @@
 #pragma once
 #include <Windows.h>
 #include <memory>
-#include <tuple>
 
 class VehHook {
 public:
@@ -16,7 +15,7 @@ public:
 	hook_t hook_address();
 	DWORD protection();
 private:
-	std::tuple<bool, MEMORY_BASIC_INFORMATION> _same_page(void* first, void* second);
+	bool _same_page(void* first, void* second);
 private:
 	bool					 _hooked = false;
 	DWORD					 _old = 0;
@@ -35,8 +34,7 @@ inline bool VehHook::hook(void* target, void* hook) {
 	_original	= target;
 	_hook		= hook;
 
-	auto [same, info_first] = _same_page(target, hook);
-	if (same) return false;
+	if (_same_page(target, hook);) return false;
 
 	if (VirtualProtect(target, 1, PAGE_EXECUTE_READ | PAGE_GUARD, &_old)) {
 		_hooked = true;
@@ -76,7 +74,7 @@ inline DWORD VehHook::protection() {
 	return _old;
 }
 
-inline std::tuple<bool, MEMORY_BASIC_INFORMATION> VehHook::_same_page(void* first, void* second) {
+inline bool VehHook::_same_page(void* first, void* second) {
 
 	MEMORY_BASIC_INFORMATION mbi_first, mbi_second;
 
