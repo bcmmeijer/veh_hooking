@@ -1,5 +1,7 @@
 #include "manager.h"
 
+hook_manager hook_manager::_manager;
+
 hook_manager::~hook_manager() {
 	if (_initialized) this->deinit();
 }
@@ -14,7 +16,7 @@ bool hook_manager::init(PVECTORED_EXCEPTION_HANDLER handler) {
 }
 
 bool hook_manager::deinit() {
-	
+
 	if (!_initialized)
 		return false;
 	
@@ -50,3 +52,6 @@ bool hook_manager::initialized() {
 	return _initialized;
 }
 
+hook_manager& hook_manager::get() {
+	return _manager;
+}

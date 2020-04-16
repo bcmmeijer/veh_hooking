@@ -1,6 +1,9 @@
 #pragma once
 #include <Windows.h>
 #include <memory>
+#include <tuple>
+
+
 
 class VehHook {
 public:
@@ -17,10 +20,10 @@ public:
 private:
 	bool _same_page(void* first, void* second);
 private:
-	bool					 _hooked = false;
-	DWORD					 _old = 0;
-	void*					 _original = nullptr;
-	void*					 _hook = nullptr;
+	bool	_hooked = false;
+	DWORD	_old = 0;
+	void*	_original = nullptr;
+	void*	_hook = nullptr;
 };
 
 inline VehHook::~VehHook() {
@@ -34,7 +37,8 @@ inline bool VehHook::hook(void* target, void* hook) {
 	_original	= target;
 	_hook		= hook;
 
-	if (_same_page(target, hook)) return false;
+	if (_same_page(target, hook)) 
+		return false;
 
 	if (VirtualProtect(target, 1, PAGE_EXECUTE_READ | PAGE_GUARD, &_old)) {
 		_hooked = true;
@@ -87,5 +91,5 @@ inline bool VehHook::_same_page(void* first, void* second) {
 	if (mbi_first.BaseAddress == mbi_second.BaseAddress)
 		return true;
 
-	return false
+	return false;
 }

@@ -7,49 +7,43 @@ typedef void (__stdcall *hk_sleep_t)(DWORD duration);
 typedef BOOL (__stdcall *hk_beep_t)(DWORD freq, DWORD duration);
 typedef DWORD(__stdcall *hk_procid_t)(void);
 
-static hook_manager manager = {};
-
 void __stdcall hk_sleep(DWORD dur) {
 	std::cout << "Called hooked sleep! -> " << dur << " ms\n";
 
-	if (manager["sleep"].get() != nullptr)
-		manager["sleep"].get()->original<hk_sleep_t>()(dur);
+	if (hook_manager::get()["sleep"].get() != nullptr)
+		hook_manager::get()["sleep"].get()->original<hk_sleep_t>()(dur);
 
-	manager["sleep"]->hook(Sleep, hk_sleep);
+	hook_manager::get()["sleep"]->hook(Sleep, hk_sleep);
 }
 
 BOOL __stdcall hk_beep(DWORD freq, DWORD duration) {
 	std::cout << "Called hooked beep! -> " << freq << " hz for " << duration << " ms\n";
 	BOOL ret = 0;
 	
-	if (manager["beep"].get() != nullptr)
-		ret = manager["beep"].get()->original<hk_beep_t>()(freq, duration);
+	if (hook_manager::get()["beep"].get() != nullptr)
+		ret = hook_manager::get()["beep"].get()->original<hk_beep_t>()(freq, duration);
 	
-	manager["beep"]->hook(Beep, hk_beep);
+	hook_manager::get()["beep"]->hook(Beep, hk_beep);
 	return ret;
 }
 
 DWORD __stdcall hk_getprocid() {
 	std::cout << "Called hooked procID -> " << rand() % 666 << std::endl;
-	manager["proc_id"]->hook(GetCurrentProcessId, hk_getprocid);
+	hook_manager::get()["proc_id"]->hook(GetCurrentProcessId, hk_getprocid);
 	return 20;
 }
 
 auto main() -> int {
 
-	manager.init(_handler);
+	hook_manager::get().init(_handler);
 
-	srand(time(0));
+	hook_manager::get()["beep"]->hook(Beep, hk_beep);
+	hook_manager::get()["sleep"]->hook(Sleep, hk_sleep);
+	hook_manager::get()["proc_id"]->hook(GetCurrentProcessId, hk_getprocid);
 
-	manager["sleep"]->hook(Sleep, hk_sleep);
-	manager["proc_id"]->hook(GetCurrentProcessId, hk_getprocid);
-	manager["beep"]->hook(Beep, hk_beep);
-
-	Sleep(10);
-	Beep(0, 0); 
 	GetCurrentProcessId();
 
-	manager.deinit();
+	hook_manager::get().deinit();
 
 	return 0;
 }
@@ -63,9 +57,10 @@ auto main() -> int {
 
 __forceinline VehHook* get_hook(PEXCEPTION_POINTERS info) {
 
-	if (!manager.initialized() || info == nullptr) return nullptr;
+	if (!hook_manager::get().initialized() || info == nullptr) 
+		return nullptr;
 
-	for (auto& [name, data] : manager.all()) {
+	for (auto& [name, data] : hook_manager::get().all()) {
 
 		if (!data->hooked()) continue;
 
@@ -76,7 +71,7 @@ __forceinline VehHook* get_hook(PEXCEPTION_POINTERS info) {
 }
 
 LONG __stdcall _handler(PEXCEPTION_POINTERS info) {
-	
+
 	if (info->ExceptionRecord->ExceptionCode == STATUS_GUARD_PAGE_VIOLATION) {
 
 		auto cur = get_hook(info);
@@ -97,7 +92,7 @@ LONG __stdcall _handler(PEXCEPTION_POINTERS info) {
 
 	else if (info->ExceptionRecord->ExceptionCode == STATUS_SINGLE_STEP) {
 		
-		for (auto & [name, data] : manager.all()) {
+		for (auto & [name, data] : hook_manager::get().all()) {
 
 			if (!data->hooked()) continue;
 
